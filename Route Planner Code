@@ -1,0 +1,330 @@
+# Routeplanner
+import heapq
+import tkinter as tk
+from tkinter import messagebox
+
+class Graph:
+    def __init__(self):
+        self.graph = {}
+        self.positions = {}
+
+    def add_edge(self, u, v, weight):
+        if u not in self.graph:
+            self.graph[u] = []
+        if v not in self.graph:
+            self.graph[v] = []
+        self.graph[u].append((v, weight))
+        self.graph[v].append((u, weight))
+
+    def remove_edge(self, u, v):
+        if u in self.graph and v in self.graph:
+            self.graph[u] = [item for item in self.graph[u] if item[0] != v]
+            self.graph[v] = [item for item in self.graph[v] if item[0] != u]
+
+    def remove_node(self, node):
+        if node in self.graph:
+            del self.graph[node]
+            for u in list(self.graph.keys()):
+                self.graph[u] = [item for item in self.graph[u] if item[0] != node]
+        if node in self.positions:
+            del self.positions[node]
+
+    def dijkstra(self, start, end):
+        # Dijkstra's algorithm to find the shortest path
+        queue = [(0, start, [])]
+        seen = set()
+        while queue:
+            (cost, node, path) = heapq.heappop(queue)
+            if node in seen:
+                continue
+            seen.add(node)
+            path = path + [node]
+            if node == end:
+                return cost, path
+            for (neighbor, weight) in self.graph.get(node, []):
+                if neighbor not in seen:
+                    heapq.heappush(queue, (cost + weight, neighbor, path))
+        return float("inf"), []
+
+class RoutePlannerApp:
+    def __init__(self, root):
+        self.graph = Graph()
+        self.root = root
+        self.root.title("Route Planner")
+        self.root.geometry("2500x1800")
+        self.root.configure(bg="#F0F8FF")
+        self.create_main_menu()
+        self.add_initial_routes()
+
+
+    def add_initial_routes(self):
+        cities = [
+            "Islamabad", "Karachi", "Lahore", "Peshawar", "Quetta", "Rawalpindi", "Multan", 
+            "Faisalabad", "Sialkot", "Gujranwala", "Gujrat", "Mardan", "Sukkur", "Hyderabad", 
+            "Bahawalpur", "Sargodha", "Mirpur", "Abbottabad", "Nowshera", "Mianwali", 
+            "Chiniot", "Jhelum", "Larkana", "Dera Ghazi Khan", "Swat", "Zhob", "Tando Adam", 
+            "Kotli", "Skardu", "Chakwal", "Jhang", "Hafizabad", "Khuzdar", "Batkhela", 
+            "Bannu", "Muzaffargarh", "Ghotki", "Jamnagar", "Rajanpur", "Mithi", "Kohat"
+        ]
+        
+        self.graph.add_edge("Islamabad", "Karachi", 1400)
+        self.graph.add_edge("Karachi", "Lahore", 1200)
+        self.graph.add_edge("Lahore", "Peshawar", 300)
+        self.graph.add_edge("Islamabad", "Peshawar", 150)
+        self.graph.add_edge("Peshawar", "Quetta", 1000)
+        self.graph.add_edge("Karachi", "Quetta", 700)
+        self.graph.add_edge("Karachi", "Rawalpindi", 1100)
+        self.graph.add_edge("Rawalpindi", "Multan", 400)
+        self.graph.add_edge("Multan", "Faisalabad", 250)
+        self.graph.add_edge("Faisalabad", "Sialkot", 100)
+        self.graph.add_edge("Sialkot", "Gujranwala", 50)
+        self.graph.add_edge("Gujranwala", "Gujrat", 75)
+        self.graph.add_edge("Gujrat", "Mardan", 300)
+        self.graph.add_edge("Mardan", "Sukkur", 550)
+        self.graph.add_edge("Sukkur", "Hyderabad", 150)
+        self.graph.add_edge("Hyderabad", "Bahawalpur", 350)
+        self.graph.add_edge("Bahawalpur", "Sargodha", 500)
+        self.graph.add_edge("Sargodha", "Mirpur", 150)
+        self.graph.add_edge("Mirpur", "Abbottabad", 250)
+        self.graph.add_edge("Abbottabad", "Nowshera", 180)
+        self.graph.add_edge("Nowshera", "Mianwali", 200)
+        self.graph.add_edge("Mianwali", "Chiniot", 300)
+        self.graph.add_edge("Chiniot", "Jhelum", 350)
+        self.graph.add_edge("Jhelum", "Larkana", 700)
+        self.graph.add_edge("Larkana", "Dera Ghazi Khan", 600)
+        self.graph.add_edge("Dera Ghazi Khan", "Swat", 450)
+        self.graph.add_edge("Swat", "Zhob", 400)
+        self.graph.add_edge("Zhob", "Tando Adam", 500)
+        self.graph.add_edge("Tando Adam", "Kotli", 300)
+        self.graph.add_edge("Kotli", "Skardu", 400)
+        self.graph.add_edge("Skardu", "Chakwal", 600)
+        self.graph.add_edge("Chakwal", "Jhang", 550)
+        self.graph.add_edge("Jhang", "Hafizabad", 250)
+        self.graph.add_edge("Hafizabad", "Khuzdar", 800)
+        self.graph.add_edge("Khuzdar", "Batkhela", 350)
+        self.graph.add_edge("Batkhela", "Bannu", 450)
+        self.graph.add_edge("Bannu", "Muzaffargarh", 400)
+        self.graph.add_edge("Muzaffargarh", "Ghotki", 250)
+        self.graph.add_edge("Ghotki", "Jamnagar", 300)
+        self.graph.add_edge("Jamnagar", "Rajanpur", 100)
+        self.graph.add_edge("Rajanpur", "Mithi", 500)
+        self.graph.add_edge("Mithi", "Kohat", 600)
+        
+
+        self.graph.positions = {
+            "Islamabad": (200, 100), "Karachi": (1800, 100), "Lahore": (950, 250),
+            "Peshawar": (250, 150), "Quetta": (1600, 400), "Rawalpindi": (250, 100),
+            "Multan": (950, 450), "Faisalabad": (850, 350), "Sialkot": (950, 350),
+            "Gujranwala": (950, 370), "Gujrat": (910, 390), "Mardan": (400, 200),
+            "Sukkur": (950, 500), "Hyderabad": (950, 450), "Bahawalpur": (900, 500),
+            "Sargodha": (800, 450), "Mirpur": (700, 500), "Abbottabad": (400, 250),
+            "Nowshera": (450, 300), "Mianwali": (500, 450), "Chiniot": (800, 450),
+            "Jhelum": (750, 480), "Larkana": (1300, 550), "Dera Ghazi Khan": (1100, 650),
+            "Swat": (600, 650), "Zhob": (1000, 700), "Tando Adam": (1100, 700),
+            "Kotli": (650, 600), "Skardu": (850, 850), "Chakwal": (700, 600),
+            "Jhang": (750, 550), "Hafizabad": (800, 500), "Khuzdar": (1200, 700),
+            "Batkhela": (500, 600), "Bannu": (550, 650), "Muzaffargarh": (650, 750),
+            "Ghotki": (1100, 650), "Jamnagar": (1150, 600), "Rajanpur": (1050, 550),
+            "Mithi": (1150, 750), "Kohat": (400, 700)
+        }
+
+    def create_main_menu(self):
+        self.clear_window()
+        title = tk.Label(self.root, text="Route Planner", font=("Helvetica", 24, "bold"), bg="#F0F8FF")
+        title.pack(pady=20)
+
+        buttons = [
+            ("1. Add City and Route", self.add_route),
+            ("2. Remove City", self.remove_city),
+            ("3. Remove Route", self.remove_route),
+            ("4. View Entire Graph", self.view_graph),
+            ("5. Find Shortest Path", self.find_shortest_path),
+            ("6. Exit", self.exit_app)
+        ]
+        
+
+        for text, command in buttons:
+            btn = tk.Button(self.root, text=text, font=("Helvetica", 14), bg="white", fg="black", width=25, height=2, command=command)
+            btn.pack(pady=10)
+
+    def find_shortest_path(self):
+        self.clear_window()
+
+        title = tk.Label(self.root, text="Find Shortest Path", font=("Helvetica", 18), bg="#F0F8FF")
+        title.pack(pady=20)
+
+        label_start = tk.Label(self.root, text="Enter starting city:", bg="#F0F8FF")
+        label_start.pack()
+        entry_start = tk.Entry(self.root)
+        entry_start.pack()
+
+        label_end = tk.Label(self.root, text="Enter destination city:", bg="#F0F8FF")
+        label_end.pack()
+        entry_end = tk.Entry(self.root)
+        entry_end.pack()
+
+        def submit_shortest_path():
+            start = entry_start.get()
+            end = entry_end.get()
+            cost, path = self.graph.dijkstra(start, end)
+            if cost == float("inf"):
+                messagebox.showerror("No Path Found", "No path exists between the cities.")
+            else:
+                messagebox.showinfo("Shortest Path", f"Shortest path from {start} to {end}:\nPath: {' -> '.join(path)}\nCost: {cost} km")
+
+        btn_submit = tk.Button(self.root, text="Find Path", font=("Helvetica", 12), bg="white", command=submit_shortest_path)
+        btn_submit.pack(pady=10)
+
+        btn_back = tk.Button(self.root, text="Back", font=("Helvetica", 12), bg="white", command=self.create_main_menu)
+        btn_back.pack(pady=10)
+
+    def view_graph(self):
+        self.clear_window()
+
+        title = tk.Label(self.root, text="Graph Visualization", font=("Helvetica", 20, "bold"), bg="#F0F8FF")
+        title.pack(pady=10)
+
+        canvas_frame = tk.Frame(self.root)
+        canvas_frame.pack(fill=tk.BOTH, expand=True)
+
+        canvas = tk.Canvas(canvas_frame, bg="white", width=2500, height=1500)
+        canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+        scrollbar = tk.Scrollbar(canvas_frame, orient=tk.VERTICAL, command=canvas.yview)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        canvas.config(yscrollcommand=scrollbar.set)
+
+        for city, connections in self.graph.graph.items():
+            if city in self.graph.positions:
+                x1, y1 = self.graph.positions[city]
+                for neighbor, weight in connections:
+                    if neighbor in self.graph.positions:
+                        x2, y2 = self.graph.positions[neighbor]
+                        canvas.create_line(x1, y1, x2, y2, fill="black", width=2)
+                        mid_x, mid_y = (x1 + x2) // 2, (y1 + y2) // 2
+                        canvas.create_text(mid_x, mid_y - 20, text=f"{weight} km", fill="red", font=("Helvetica", 10))
+
+        for city, (x, y) in self.graph.positions.items():
+            canvas.create_oval(x-5, y-5, x+5, y+5, fill="aqua")
+            canvas.create_text(x, y, text=city, fill="black", font=("Helvetica", 12))
+
+        btn_back = tk.Button(self.root, text="Back", font=("Helvetica", 12), bg="white", command=self.create_main_menu)
+        btn_back.pack(pady=10)
+        # Bind Backspace key only for the view graph section
+        self.root.bind('<BackSpace>', self.go_back)
+
+    def add_route(self):
+        self.clear_window()
+
+        title = tk.Label(self.root, text="Add City and Route", font=("Helvetica", 18), bg="#F0F8FF")
+        title.pack(pady=20)
+
+        label_city1 = tk.Label(self.root, text="Enter first city:", bg="#F0F8FF")
+        label_city1.pack()
+        entry_city1 = tk.Entry(self.root)
+        entry_city1.pack()
+
+        label_city2 = tk.Label(self.root, text="Enter second city:", bg="#F0F8FF")
+        label_city2.pack()
+        entry_city2 = tk.Entry(self.root)
+        entry_city2.pack()
+
+        label_weight = tk.Label(self.root, text="Enter distance (in km):", bg="#F0F8FF")
+        label_weight.pack()
+        entry_weight = tk.Entry(self.root)
+        entry_weight.pack()
+
+        def submit_route():
+            city1 = entry_city1.get()
+            city2 = entry_city2.get()
+            weight = entry_weight.get()
+
+            if not city1 or not city2 or not weight.isdigit():
+                messagebox.showerror("Invalid Input", "Please enter valid cities and distance.")
+                return
+
+            weight = int(weight)
+            self.graph.add_edge(city1, city2, weight)
+            messagebox.showinfo("Success", f"Route added between {city1} and {city2} with distance {weight} km.")
+
+        btn_submit = tk.Button(self.root, text="Add Route", font=("Helvetica", 12), bg="white", command=submit_route)
+        btn_submit.pack(pady=10)
+
+        btn_back = tk.Button(self.root, text="Back", font=("Helvetica", 12), bg="white", command=self.create_main_menu)
+        btn_back.pack(pady=10)
+
+    def remove_route(self):
+        self.clear_window()
+
+        title = tk.Label(self.root, text="Remove Route", font=("Helvetica", 18), bg="#F0F8FF")
+        title.pack(pady=20)
+
+        label_city1 = tk.Label(self.root, text="Enter first city:", bg="#F0F8FF")
+        label_city1.pack()
+        entry_city1 = tk.Entry(self.root)
+        entry_city1.pack()
+
+        label_city2 = tk.Label(self.root, text="Enter second city:", bg="#F0F8FF")
+        label_city2.pack()
+        entry_city2 = tk.Entry(self.root)
+        entry_city2.pack()
+
+        def submit_route():
+            city1 = entry_city1.get()
+            city2 = entry_city2.get()
+
+            if not city1 or not city2:
+                messagebox.showerror("Invalid Input", "Please enter valid cities.")
+                return
+
+            self.graph.remove_edge(city1, city2)
+            messagebox.showinfo("Success", f"Route removed between {city1} and {city2}.")
+
+        btn_submit = tk.Button(self.root, text="Remove Route", font=("Helvetica", 12), bg="white", command=submit_route)
+        btn_submit.pack(pady=10)
+
+        btn_back = tk.Button(self.root, text="Back", font=("Helvetica", 12), bg="white", command=self.create_main_menu)
+        btn_back.pack(pady=10)
+
+    def remove_city(self):
+        self.clear_window()
+
+        title = tk.Label(self.root, text="Remove City", font=("Helvetica", 18), bg="#F0F8FF")
+        title.pack(pady=20)
+
+        label_city = tk.Label(self.root, text="Enter city to remove:", bg="#F0F8FF")
+        label_city.pack()
+        entry_city = tk.Entry(self.root)
+        entry_city.pack()
+
+        def submit_city():
+            city = entry_city.get()
+
+            if not city:
+                messagebox.showerror("Invalid Input", "Please enter a valid city.")
+                return
+
+            self.graph.remove_node(city)
+            messagebox.showinfo("Success", f"City {city} and its routes have been removed.")
+
+        btn_submit = tk.Button(self.root, text="Remove City", font=("Helvetica", 12), bg="white", command=submit_city)
+        btn_submit.pack(pady=10)
+
+        btn_back = tk.Button(self.root, text="Back", font=("Helvetica", 12), bg="white", command=self.create_main_menu)
+        btn_back.pack(pady=10)
+
+    def clear_window(self):
+        for widget in self.root.winfo_children():
+            widget.destroy()
+
+    def exit_app(self):
+        self.root.quit()
+
+    def go_back_view_graph(self, event):
+        self.create_main_menu()
+
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = RoutePlannerApp(root)
+    root.mainloop()
